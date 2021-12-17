@@ -3,6 +3,7 @@ cmake_minimum_required(VERSION 3.15.0)
 project(SimpleProject LANGUAGES CXX)
 set(CMAKE_BUILD_TYPE RelWithDebInfo)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+set(CMAKE_COLOR_NINJA ON)
 
 include(CMakePrintHelpers)
 cmake_print_variables(LLVM_ROOT)
@@ -58,8 +59,9 @@ clangLex
 clangTransformer
 clangTooling)
 
-set(COMPILATION_DATABASE_DIR /home/caishenghang/oneflow-table-gen/build/ CACHE STRING "" FORCE)
-set(TEST_OP_SRC /home/caishenghang/oneflow-table-gen/oneflow/user/ops/arg_sort_op.cpp CACHE STRING "" FORCE)
+set(ONEFLOW_SRC /home/caishenghang/oneflow-table-gen)
+set(COMPILATION_DATABASE_DIR ${ONEFLOW_SRC}/build/ CACHE STRING "" FORCE)
+set(TEST_OP_SRC ${ONEFLOW_SRC}/oneflow/user/ops/arg_sort_op.cpp CACHE STRING "" FORCE)
 add_custom_target(move-op
   DEPENDS simple-tool
   COMMAND "$<TARGET_FILE:simple-tool>" ${COMPILATION_DATABASE_DIR} ${TEST_OP_SRC}
