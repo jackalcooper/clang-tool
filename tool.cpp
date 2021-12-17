@@ -52,12 +52,13 @@ using namespace clang;
 using namespace clang::ast_matchers;
 using namespace clang::tooling;
 using namespace llvm;
+using clang::ast_type_traits::TraversalKind::TK_IgnoreUnlessSpelledInSource;
 
 #define declSetFn(func_name)                                                   \
   std::string getFuncName_##func_name() { return #func_name; }                 \
-  auto has##func_name##Expr =                                                  \
-      has(cxxMemberCallExpr(has(memberExpr(member(hasName(#func_name)))))      \
-              .bind(getFuncName_##func_name()));
+  auto func_name##Expr =                                                       \
+      cxxMemberCallExpr(has(memberExpr(member(hasName(#func_name)))))          \
+          .bind(getFuncName_##func_name());
 
 declSetFn(SetTensorDescInferFn);
 declSetFn(SetLogicalTensorDescInferFn);
@@ -77,19 +78,11 @@ void checkAndDump(const MatchFinder::MatchResult &Result, std::string name) {
   auto *C = Result.Nodes.getNodeAs<T>(name);
   if (C && C->getBeginLoc().isValid()) {
     llvm::errs() << "[dump] " << name << "\n";
-    C->dump();
+    // C->dump();
   } else {
     llvm::errs() << "[absent] " << name << "\n";
   }
 }
-
-#define listSetFnNames                                                         \
-  hasSetTensorDescInferFnExpr, hasSetLogicalTensorDescInferFnExpr,             \
-      hasSetPhysicalTensorDescInferFnExpr, hasSetGetSbpFnExpr,                 \
-      hasSetSbpSignatureInferFnExpr, hasSetInputArgModifyFnExpr,               \
-      hasSetOutputArgModifyFnExpr, hasSetOutputBlobTimeShapeInferFnExpr,       \
-      hasSetNdSbpInferFnExpr, hasSetCheckAttrFnExpr,                           \
-      hasSetDataTypeInferFnExpr, hasSetDeviceInferFnExpr
 
 namespace {
 class ToolTemplateCallback : public MatchFinder::MatchCallback {
@@ -138,16 +131,14 @@ int main(int argc, const char **argv) {
   ast_matchers::MatchFinder Finder;
   ToolTemplateCallback Callback(*Executor->get()->getExecutionContext());
 
-  Finder.addMatcher(
-      traverse(
-          clang::ast_type_traits::TraversalKind::TK_IgnoreUnlessSpelledInSource,
-          varDecl(hasGlobalStorage(),
-                  hasType(cxxRecordDecl(matchesName("UserOpRegisterTrigger"))),
-                  optionally(anyOf(listSetFnNames), anyOf(listSetFnNames),
-                             anyOf(listSetFnNames), anyOf(listSetFnNames),
-                             anyOf(listSetFnNames), anyOf(listSetFnNames)))
-              .bind("decl")),
-      &Callback);
+  Finder.addMatcher(traverse(TK_IgnoreUnlessSpelledInSource,
+                             varDecl(hasGlobalStorage(),
+                                     hasType(cxxRecordDecl(
+                                         matchesName("UserOpRegisterTrigger"))),
+                                     forEachDescendant(SetDataTypeInferFnExpr),
+                                     forEachDescendant(SetCheckAttrFnExpr))
+                                 .bind("decl")),
+                    &Callback);
 
   auto Err = Executor->get()->execute(newFrontendActionFactory(&Finder));
   if (Err) {
