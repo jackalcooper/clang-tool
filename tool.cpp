@@ -131,14 +131,25 @@ int main(int argc, const char **argv) {
   ast_matchers::MatchFinder Finder;
   ToolTemplateCallback Callback(*Executor->get()->getExecutionContext());
 
-  Finder.addMatcher(traverse(TK_IgnoreUnlessSpelledInSource,
-                             varDecl(hasGlobalStorage(),
-                                     hasType(cxxRecordDecl(
-                                         matchesName("UserOpRegisterTrigger"))),
-                                     forEachDescendant(SetDataTypeInferFnExpr),
-                                     forEachDescendant(SetCheckAttrFnExpr))
-                                 .bind("decl")),
-                    &Callback);
+  Finder.addMatcher(
+      traverse(
+          TK_IgnoreUnlessSpelledInSource,
+          varDecl(hasGlobalStorage(),
+                  hasType(cxxRecordDecl(matchesName("UserOpRegisterTrigger"))),
+                  forEachDescendant(SetTensorDescInferFnExpr),
+                  forEachDescendant(SetLogicalTensorDescInferFnExpr),
+                  forEachDescendant(SetPhysicalTensorDescInferFnExpr),
+                  forEachDescendant(SetGetSbpFnExpr),
+                  forEachDescendant(SetSbpSignatureInferFnExpr),
+                  forEachDescendant(SetInputArgModifyFnExpr),
+                  forEachDescendant(SetOutputArgModifyFnExpr),
+                  forEachDescendant(SetOutputBlobTimeShapeInferFnExpr),
+                  forEachDescendant(SetNdSbpInferFnExpr),
+                  forEachDescendant(SetCheckAttrFnExpr),
+                  forEachDescendant(SetDataTypeInferFnExpr),
+                  forEachDescendant(SetDeviceInferFnExpr))
+              .bind("decl")),
+      &Callback);
 
   auto Err = Executor->get()->execute(newFrontendActionFactory(&Finder));
   if (Err) {
