@@ -75,12 +75,9 @@ public:
   ToolTemplateCallback(ExecutionContext &Context) : Context(Context) {}
 
   void run(const MatchFinder::MatchResult &Result) override {
-    // TODO: This routine will get called for each thing that the matchers
-    // find.
-    // At this point, you can examine the match, and do whatever you want,
-    // including replacing the matched text with other text
     auto *D = Result.Nodes.getNodeAs<VarDecl>("decl");
-    auto *C = Result.Nodes.getNodeAs<CXXMemberCallExpr>("call");
+    auto *C = Result.Nodes.getNodeAs<CXXMemberCallExpr>(
+        getFuncName_SetDataTypeInferFn());
     assert(D);
     // Use AtomicChange to get a key.
     if (C->getBeginLoc().isValid()) {
@@ -110,7 +107,6 @@ private:
 };
 } // end anonymous namespace
 
-// Set up the command line options
 static cl::extrahelp CommonHelp(CommonOptionsParser::HelpMessage);
 static cl::OptionCategory ToolTemplateCategory("tool-template options");
 
@@ -129,16 +125,9 @@ int main(int argc, const char **argv) {
   ast_matchers::MatchFinder Finder;
   ToolTemplateCallback Callback(*Executor->get()->getExecutionContext());
 
-  // TODO: Put your matchers here.
-  // Use Finder.addMatcher(...) to define the patterns in the AST that you
-  // want to match against. You are not limited to just one matcher!
-  //
-  // This is a sample matcher:
-  // auto MatchesCall = cxxMemberCallExpr(on(callExpr()));
   auto DataTypeInferFn =
       cxxMemberCallExpr(has(memberExpr(member(hasName("SetDataTypeInferFn")))))
-          .bind("call");
-  auto naiveDataTypeInferFn = cxxMemberCallExpr().bind("call");
+          .bind(getFuncName_SetDataTypeInferFn());
   Finder.addMatcher(
       traverse(
           clang::ast_type_traits::TraversalKind::TK_IgnoreUnlessSpelledInSource,
