@@ -72,6 +72,17 @@ declSetFn(SetCheckAttrFn);
 declSetFn(SetDataTypeInferFn);
 declSetFn(SetDeviceInferFn);
 
+template <typename T>
+void checkAndDump(const MatchFinder::MatchResult &Result, std::string name) {
+  auto *C = Result.Nodes.getNodeAs<T>(name);
+  if (C && C->getBeginLoc().isValid()) {
+    llvm::errs() << "[dump] " << name << "\n";
+    C->dump();
+  } else {
+    llvm::errs() << "[absent] " << name << "\n";
+  }
+}
+
 #define listSetFnNames                                                         \
   hasSetTensorDescInferFnExpr, hasSetLogicalTensorDescInferFnExpr,             \
       hasSetPhysicalTensorDescInferFnExpr, hasSetGetSbpFnExpr,                 \
@@ -86,25 +97,9 @@ public:
   ToolTemplateCallback(ExecutionContext &Context) : Context(Context) {}
 
   void run(const MatchFinder::MatchResult &Result) override {
-    auto *D = Result.Nodes.getNodeAs<VarDecl>("decl");
-    auto *C = Result.Nodes.getNodeAs<CXXMemberCallExpr>(
-        getFuncName_SetDataTypeInferFn());
-    auto *G =
-        Result.Nodes.getNodeAs<CXXMemberCallExpr>(getFuncName_SetCheckAttrFn());
-    assert(D);
-    llvm::errs() << "D\n";
-    assert(C);
-    llvm::errs() << "C\n";
-    assert(G);
-    llvm::errs() << "G\n";
-    // Use AtomicChange to get a key.
-    if (C->getBeginLoc().isValid()) {
-      C->getBeginLoc().dump(*Result.SourceManager);
-      // C->dump();
-      // for (auto a : C->arguments()) {
-      //   a->dump();
-      // }
-    }
+    checkAndDump<VarDecl>(Result, "decl");
+    checkAndDump<CXXMemberCallExpr>(Result, getFuncName_SetDataTypeInferFn());
+    checkAndDump<CXXMemberCallExpr>(Result, getFuncName_SetCheckAttrFn());
     // if (D->getBeginLoc().isValid()) {
     //   D->getBeginLoc().dump(*Result.SourceManager);
     //   D->dump();
@@ -148,8 +143,9 @@ int main(int argc, const char **argv) {
           clang::ast_type_traits::TraversalKind::TK_IgnoreUnlessSpelledInSource,
           varDecl(hasGlobalStorage(),
                   hasType(cxxRecordDecl(matchesName("UserOpRegisterTrigger"))),
-                  anyOf(listSetFnNames), anyOf(listSetFnNames),
-                  anyOf(listSetFnNames), anyOf(listSetFnNames))
+                  optionally(anyOf(listSetFnNames), anyOf(listSetFnNames),
+                             anyOf(listSetFnNames), anyOf(listSetFnNames),
+                             anyOf(listSetFnNames), anyOf(listSetFnNames)))
               .bind("decl")),
       &Callback);
 
