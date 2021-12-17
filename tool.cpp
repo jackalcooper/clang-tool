@@ -53,21 +53,24 @@ using namespace clang::ast_matchers;
 using namespace clang::tooling;
 using namespace llvm;
 
-#define declare_getFuncName(func_name)                                         \
-  std::string getFuncName_##func_name() { return "##func_name"; }
+#define declSetFn(func_name)                                                   \
+  std::string getFuncName_##func_name() { return #func_name; }                 \
+  auto has##func_name##Expr =                                                  \
+      has(cxxMemberCallExpr(has(memberExpr(member(hasName(#func_name)))))      \
+              .bind(getFuncName_##func_name()));
 
-declare_getFuncName(SetTensorDescInferFn);
-declare_getFuncName(SetLogicalTensorDescInferFn);
-declare_getFuncName(SetPhysicalTensorDescInferFn);
-declare_getFuncName(SetGetSbpFn);
-declare_getFuncName(SetSbpSignatureInferFn);
-declare_getFuncName(SetInputArgModifyFn);
-declare_getFuncName(SetOutputArgModifyFn);
-declare_getFuncName(SetOutputBlobTimeShapeInferFn);
-declare_getFuncName(SetNdSbpInferFn);
-declare_getFuncName(SetCheckAttrFn);
-declare_getFuncName(SetDataTypeInferFn);
-declare_getFuncName(SetDeviceInferFn);
+declSetFn(SetTensorDescInferFn);
+declSetFn(SetLogicalTensorDescInferFn);
+declSetFn(SetPhysicalTensorDescInferFn);
+declSetFn(SetGetSbpFn);
+declSetFn(SetSbpSignatureInferFn);
+declSetFn(SetInputArgModifyFn);
+declSetFn(SetOutputArgModifyFn);
+declSetFn(SetOutputBlobTimeShapeInferFn);
+declSetFn(SetNdSbpInferFn);
+declSetFn(SetCheckAttrFn);
+declSetFn(SetDataTypeInferFn);
+declSetFn(SetDeviceInferFn);
 
 namespace {
 class ToolTemplateCallback : public MatchFinder::MatchCallback {
@@ -78,7 +81,11 @@ public:
     auto *D = Result.Nodes.getNodeAs<VarDecl>("decl");
     auto *C = Result.Nodes.getNodeAs<CXXMemberCallExpr>(
         getFuncName_SetDataTypeInferFn());
+    auto *G =
+        Result.Nodes.getNodeAs<CXXMemberCallExpr>(getFuncName_SetCheckAttrFn());
     assert(D);
+    assert(C);
+    assert(G);
     // Use AtomicChange to get a key.
     if (C->getBeginLoc().isValid()) {
       C->getBeginLoc().dump(*Result.SourceManager);
@@ -125,15 +132,12 @@ int main(int argc, const char **argv) {
   ast_matchers::MatchFinder Finder;
   ToolTemplateCallback Callback(*Executor->get()->getExecutionContext());
 
-  auto DataTypeInferFn =
-      cxxMemberCallExpr(has(memberExpr(member(hasName("SetDataTypeInferFn")))))
-          .bind(getFuncName_SetDataTypeInferFn());
   Finder.addMatcher(
       traverse(
           clang::ast_type_traits::TraversalKind::TK_IgnoreUnlessSpelledInSource,
           varDecl(hasGlobalStorage(),
                   hasType(cxxRecordDecl(matchesName("UserOpRegisterTrigger"))),
-                  has(DataTypeInferFn))
+                  hasSetDataTypeInferFnExpr)
               .bind("decl")),
       &Callback);
 
