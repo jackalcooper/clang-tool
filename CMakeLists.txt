@@ -58,7 +58,7 @@ clangLex
 clangTransformer
 clangTooling)
 
-set(COMPILATION_DATABASE_DIR /home/caishenghang/oneflow-table-gen/build/compile_commands.json CACHE STRING "" FORCE)
+set(COMPILATION_DATABASE_DIR /home/caishenghang/oneflow-table-gen/build CACHE STRING "" FORCE)
 set(TEST_OP_SRC /home/caishenghang/oneflow-table-gen/oneflow/user/ops/arg_sort_op.cpp CACHE STRING "" FORCE)
 add_custom_target(move-op
   DEPENDS simple-tool
