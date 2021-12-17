@@ -1,12 +1,15 @@
 # "LLVM_DIR":"/home/dzheng/opensource/llvm12/build-tool/lib/cmake/llvm"
 cmake_minimum_required(VERSION 3.15.0)
 project(SimpleProject LANGUAGES CXX)
+set(CMAKE_BUILD_TYPE RelWithDebInfo)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 include(CMakePrintHelpers)
 cmake_print_variables(LLVM_ROOT)
 
 set(CMAKE_FIND_PACKAGE_PREFER_CONFIG ON)
-
+find_package(LLVM REQUIRED CONFIG)
+find_package(Clang REQUIRED CONFIG)
 # Find CMake file for Clang
 find_package(Clang REQUIRED
             ONLY_CMAKE_FIND_ROOT_PATH
@@ -40,10 +43,8 @@ add_definitions(${CLANG_DEFINITIONS})
 add_llvm_executable(simple-tool tool.cpp)
 
 set_property(TARGET simple-tool PROPERTY CXX_STANDARD 17)
-target_link_libraries(simple-tool PRIVATE 
-LLVMCore
-LLVMIRReader
-LLVMSupport
+target_link_libraries(simple-tool PRIVATE
+LLVM
 clangFrontend
 clangSerialization
 clangDriver
@@ -56,3 +57,10 @@ clangEdit
 clangLex
 clangTransformer
 clangTooling)
+
+set(COMPILATION_DATABASE_DIR /home/caishenghang/oneflow-table-gen/build/compile_commands.json CACHE STRING "" FORCE)
+set(TEST_OP_SRC /home/caishenghang/oneflow-table-gen/oneflow/user/ops/arg_sort_op.cpp CACHE STRING "" FORCE)
+add_custom_target(move-op
+  DEPENDS simple-tool
+  COMMAND "$<TARGET_FILE:simple-tool>" ${COMPILATION_DATABASE_DIR} ${TEST_OP_SRC}
+)
