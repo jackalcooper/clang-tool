@@ -32,7 +32,7 @@
 //        xargs tool-template /path/to/build
 //
 //===----------------------------------------------------------------------===//
-
+#undef NDEBUG
 #include "clang/AST/ASTTypeTraits.h"
 #include "clang/ASTMatchers/ASTMatchFinder.h"
 #include "clang/ASTMatchers/ASTMatchers.h"
@@ -72,6 +72,14 @@ declSetFn(SetCheckAttrFn);
 declSetFn(SetDataTypeInferFn);
 declSetFn(SetDeviceInferFn);
 
+#define listSetFnNames                                                         \
+  hasSetTensorDescInferFnExpr, hasSetLogicalTensorDescInferFnExpr,             \
+      hasSetPhysicalTensorDescInferFnExpr, hasSetGetSbpFnExpr,                 \
+      hasSetSbpSignatureInferFnExpr, hasSetInputArgModifyFnExpr,               \
+      hasSetOutputArgModifyFnExpr, hasSetOutputBlobTimeShapeInferFnExpr,       \
+      hasSetNdSbpInferFnExpr, hasSetCheckAttrFnExpr,                           \
+      hasSetDataTypeInferFnExpr, hasSetDeviceInferFnExpr
+
 namespace {
 class ToolTemplateCallback : public MatchFinder::MatchCallback {
 public:
@@ -84,12 +92,15 @@ public:
     auto *G =
         Result.Nodes.getNodeAs<CXXMemberCallExpr>(getFuncName_SetCheckAttrFn());
     assert(D);
+    llvm::errs() << "D\n";
     assert(C);
+    llvm::errs() << "C\n";
     assert(G);
+    llvm::errs() << "G\n";
     // Use AtomicChange to get a key.
     if (C->getBeginLoc().isValid()) {
       C->getBeginLoc().dump(*Result.SourceManager);
-      C->dump();
+      // C->dump();
       // for (auto a : C->arguments()) {
       //   a->dump();
       // }
@@ -137,7 +148,8 @@ int main(int argc, const char **argv) {
           clang::ast_type_traits::TraversalKind::TK_IgnoreUnlessSpelledInSource,
           varDecl(hasGlobalStorage(),
                   hasType(cxxRecordDecl(matchesName("UserOpRegisterTrigger"))),
-                  hasSetDataTypeInferFnExpr)
+                  anyOf(listSetFnNames), anyOf(listSetFnNames),
+                  anyOf(listSetFnNames), anyOf(listSetFnNames))
               .bind("decl")),
       &Callback);
 
