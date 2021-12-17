@@ -66,6 +66,8 @@ public:
     assert(D);
     // Use AtomicChange to get a key.
     if (D->getBeginLoc().isValid()) {
+      D->getBeginLoc().dump(*Result.SourceManager);
+      D->dump();
       AtomicChange Change(*Result.SourceManager, D->getBeginLoc());
       Context.reportResult(Change.getKey(), D->getQualifiedNameAsString());
     }
@@ -108,7 +110,9 @@ int main(int argc, const char **argv) {
   //
   // This is a sample matcher:
   Finder.addMatcher(
-      namedDecl(cxxRecordDecl(), isExpansionInMainFile()).bind("decl"),
+      varDecl(hasGlobalStorage(),
+              hasType(cxxRecordDecl(matchesName("UserOpRegisterTrigger"))))
+          .bind("decl"),
       &Callback);
 
   auto Err = Executor->get()->execute(newFrontendActionFactory(&Finder));
@@ -118,6 +122,6 @@ int main(int argc, const char **argv) {
   }
   Executor->get()->getToolResults()->forEachResult(
       [](llvm::StringRef key, llvm::StringRef value) {
-        llvm::errs() << "----" << key.str() << "\n" << value.str() << "\n";
+        // llvm::errs() << "----" << key.str() << "\n" << value.str() << "\n";
       });
 }
