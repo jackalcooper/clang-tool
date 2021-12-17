@@ -94,7 +94,8 @@ int main(int argc, const char **argv) {
       argc, argv, ToolTemplateCategory);
 
   if (!Executor) {
-    llvm::errs() << llvm::toString(Executor.takeError()) << "\n";
+    llvm::errs() << "Executor create error: "
+                 << llvm::toString(Executor.takeError()) << "\n";
     return 1;
   }
 
@@ -112,7 +113,8 @@ int main(int argc, const char **argv) {
 
   auto Err = Executor->get()->execute(newFrontendActionFactory(&Finder));
   if (Err) {
-    llvm::errs() << llvm::toString(std::move(Err)) << "\n";
+    llvm::errs() << "Executor execute error: " << llvm::toString(std::move(Err))
+                 << "\n";
   }
   Executor->get()->getToolResults()->forEachResult(
       [](llvm::StringRef key, llvm::StringRef value) {

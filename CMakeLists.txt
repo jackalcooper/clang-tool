@@ -60,9 +60,10 @@ clangTransformer
 clangTooling)
 
 set(ONEFLOW_SRC /home/caishenghang/oneflow-table-gen)
-set(COMPILATION_DATABASE_DIR ${ONEFLOW_SRC}/build/ CACHE STRING "" FORCE)
+set(COMPILATION_DATABASE_DIR ${ONEFLOW_SRC}/build CACHE STRING "" FORCE)
 set(TEST_OP_SRC ${ONEFLOW_SRC}/oneflow/user/ops/arg_sort_op.cpp CACHE STRING "" FORCE)
+
 add_custom_target(move-op
   DEPENDS simple-tool
-  COMMAND "$<TARGET_FILE:simple-tool>" ${COMPILATION_DATABASE_DIR} ${TEST_OP_SRC}
+  COMMAND "$<TARGET_FILE:simple-tool>" -p=${COMPILATION_DATABASE_DIR} ${TEST_OP_SRC}
 )
