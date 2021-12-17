@@ -33,6 +33,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "clang/AST/ASTTypeTraits.h"
 #include "clang/ASTMatchers/ASTMatchFinder.h"
 #include "clang/ASTMatchers/ASTMatchers.h"
 #include "clang/Basic/SourceManager.h"
@@ -62,15 +63,23 @@ public:
     // find.
     // At this point, you can examine the match, and do whatever you want,
     // including replacing the matched text with other text
-    auto *D = Result.Nodes.getNodeAs<NamedDecl>("decl");
+    auto *D = Result.Nodes.getNodeAs<VarDecl>("decl");
+    auto *C = Result.Nodes.getNodeAs<CXXMemberCallExpr>("call");
     assert(D);
     // Use AtomicChange to get a key.
-    if (D->getBeginLoc().isValid()) {
-      D->getBeginLoc().dump(*Result.SourceManager);
-      D->dump();
-      AtomicChange Change(*Result.SourceManager, D->getBeginLoc());
-      Context.reportResult(Change.getKey(), D->getQualifiedNameAsString());
+    if (C->getBeginLoc().isValid()) {
+      C->getBeginLoc().dump(*Result.SourceManager);
+      // C->dump();
+      for (auto a : C->arguments()) {
+        a->dump();
+      }
     }
+    // if (D->getBeginLoc().isValid()) {
+    //   D->getBeginLoc().dump(*Result.SourceManager);
+    //   D->dump();
+    //   AtomicChange Change(*Result.SourceManager, D->getBeginLoc());
+    //   Context.reportResult(Change.getKey(), D->getQualifiedNameAsString());
+    // }
   }
 
   void onStartOfTranslationUnit() override {
@@ -109,10 +118,18 @@ int main(int argc, const char **argv) {
   // want to match against. You are not limited to just one matcher!
   //
   // This is a sample matcher:
+  // auto MatchesCall = cxxMemberCallExpr(on(callExpr()));
+  auto DataTypeInferFn =
+      cxxMemberCallExpr(callee(cxxMethodDecl(hasName("DataTypeInferFn"))))
+          .bind("call");
+  auto naiveDataTypeInferFn = cxxMemberCallExpr().bind("call");
   Finder.addMatcher(
-      varDecl(hasGlobalStorage(),
-              hasType(cxxRecordDecl(matchesName("UserOpRegisterTrigger"))))
-          .bind("decl"),
+      traverse(
+          clang::ast_type_traits::TraversalKind::TK_IgnoreUnlessSpelledInSource,
+          varDecl(hasGlobalStorage(),
+                  hasType(cxxRecordDecl(matchesName("UserOpRegisterTrigger"))),
+                  has(naiveDataTypeInferFn))
+              .bind("decl")),
       &Callback);
 
   auto Err = Executor->get()->execute(newFrontendActionFactory(&Finder));
