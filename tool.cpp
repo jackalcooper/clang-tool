@@ -69,10 +69,10 @@ public:
     // Use AtomicChange to get a key.
     if (C->getBeginLoc().isValid()) {
       C->getBeginLoc().dump(*Result.SourceManager);
-      // C->dump();
-      for (auto a : C->arguments()) {
-        a->dump();
-      }
+      C->dump();
+      // for (auto a : C->arguments()) {
+      //   a->dump();
+      // }
     }
     // if (D->getBeginLoc().isValid()) {
     //   D->getBeginLoc().dump(*Result.SourceManager);
@@ -120,7 +120,7 @@ int main(int argc, const char **argv) {
   // This is a sample matcher:
   // auto MatchesCall = cxxMemberCallExpr(on(callExpr()));
   auto DataTypeInferFn =
-      cxxMemberCallExpr(callee(cxxMethodDecl(hasName("DataTypeInferFn"))))
+      cxxMemberCallExpr(has(memberExpr(member(hasName("SetDataTypeInferFn")))))
           .bind("call");
   auto naiveDataTypeInferFn = cxxMemberCallExpr().bind("call");
   Finder.addMatcher(
@@ -128,7 +128,7 @@ int main(int argc, const char **argv) {
           clang::ast_type_traits::TraversalKind::TK_IgnoreUnlessSpelledInSource,
           varDecl(hasGlobalStorage(),
                   hasType(cxxRecordDecl(matchesName("UserOpRegisterTrigger"))),
-                  has(naiveDataTypeInferFn))
+                  has(DataTypeInferFn))
               .bind("decl")),
       &Callback);
 
