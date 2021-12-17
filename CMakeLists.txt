@@ -66,4 +66,5 @@ set(TEST_OP_SRC ${ONEFLOW_SRC}/oneflow/user/ops/arg_sort_op.cpp CACHE STRING "" 
 add_custom_target(move-op
   DEPENDS simple-tool
   COMMAND "$<TARGET_FILE:simple-tool>" -p=${COMPILATION_DATABASE_DIR} ${TEST_OP_SRC}
+  USES_TERMINAL
 )
