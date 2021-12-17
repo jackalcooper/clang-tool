@@ -53,6 +53,22 @@ using namespace clang::ast_matchers;
 using namespace clang::tooling;
 using namespace llvm;
 
+#define declare_getFuncName(func_name)                                         \
+  std::string getFuncName_##func_name() { return "##func_name"; }
+
+declare_getFuncName(SetTensorDescInferFn);
+declare_getFuncName(SetLogicalTensorDescInferFn);
+declare_getFuncName(SetPhysicalTensorDescInferFn);
+declare_getFuncName(SetGetSbpFn);
+declare_getFuncName(SetSbpSignatureInferFn);
+declare_getFuncName(SetInputArgModifyFn);
+declare_getFuncName(SetOutputArgModifyFn);
+declare_getFuncName(SetOutputBlobTimeShapeInferFn);
+declare_getFuncName(SetNdSbpInferFn);
+declare_getFuncName(SetCheckAttrFn);
+declare_getFuncName(SetDataTypeInferFn);
+declare_getFuncName(SetDeviceInferFn);
+
 namespace {
 class ToolTemplateCallback : public MatchFinder::MatchCallback {
 public:
