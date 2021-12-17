@@ -80,7 +80,7 @@ void checkAndDump(const MatchFinder::MatchResult &Result, std::string name) {
     llvm::errs() << "[dump] " << name << "\n";
     // C->dump();
   } else {
-    llvm::errs() << "[absent] " << name << "\n";
+    // llvm::errs() << "[absent] " << name << "\n";
   }
 }
 
@@ -91,8 +91,22 @@ public:
 
   void run(const MatchFinder::MatchResult &Result) override {
     checkAndDump<VarDecl>(Result, "decl");
-    checkAndDump<CXXMemberCallExpr>(Result, getFuncName_SetDataTypeInferFn());
+    checkAndDump<CXXMemberCallExpr>(Result, getFuncName_SetTensorDescInferFn());
+    checkAndDump<CXXMemberCallExpr>(Result,
+                                    getFuncName_SetLogicalTensorDescInferFn());
+    checkAndDump<CXXMemberCallExpr>(Result,
+                                    getFuncName_SetPhysicalTensorDescInferFn());
+    checkAndDump<CXXMemberCallExpr>(Result, getFuncName_SetGetSbpFn());
+    checkAndDump<CXXMemberCallExpr>(Result,
+                                    getFuncName_SetSbpSignatureInferFn());
+    checkAndDump<CXXMemberCallExpr>(Result, getFuncName_SetInputArgModifyFn());
+    checkAndDump<CXXMemberCallExpr>(Result, getFuncName_SetOutputArgModifyFn());
+    checkAndDump<CXXMemberCallExpr>(
+        Result, getFuncName_SetOutputBlobTimeShapeInferFn());
+    checkAndDump<CXXMemberCallExpr>(Result, getFuncName_SetNdSbpInferFn());
     checkAndDump<CXXMemberCallExpr>(Result, getFuncName_SetCheckAttrFn());
+    checkAndDump<CXXMemberCallExpr>(Result, getFuncName_SetDataTypeInferFn());
+    checkAndDump<CXXMemberCallExpr>(Result, getFuncName_SetDeviceInferFn());
     // if (D->getBeginLoc().isValid()) {
     //   D->getBeginLoc().dump(*Result.SourceManager);
     //   D->dump();
@@ -134,21 +148,20 @@ int main(int argc, const char **argv) {
   Finder.addMatcher(
       traverse(
           TK_IgnoreUnlessSpelledInSource,
-          varDecl(
-              hasGlobalStorage(),
-              hasType(cxxRecordDecl(matchesName("UserOpRegisterTrigger"))),
-              optionally(forEachDescendant(SetTensorDescInferFnExpr),
-                         forEachDescendant(SetLogicalTensorDescInferFnExpr),
-                         forEachDescendant(SetPhysicalTensorDescInferFnExpr),
-                         forEachDescendant(SetGetSbpFnExpr),
-                         forEachDescendant(SetSbpSignatureInferFnExpr),
-                         forEachDescendant(SetInputArgModifyFnExpr),
-                         forEachDescendant(SetOutputArgModifyFnExpr),
-                         forEachDescendant(SetOutputBlobTimeShapeInferFnExpr),
-                         forEachDescendant(SetNdSbpInferFnExpr),
-                         forEachDescendant(SetCheckAttrFnExpr),
-                         forEachDescendant(SetDataTypeInferFnExpr),
-                         forEachDescendant(SetDeviceInferFnExpr)))
+          varDecl(hasGlobalStorage(),
+                  hasType(cxxRecordDecl(matchesName("UserOpRegisterTrigger"))),
+                  optionally(hasDescendant(SetTensorDescInferFnExpr),
+                             hasDescendant(SetLogicalTensorDescInferFnExpr),
+                             hasDescendant(SetPhysicalTensorDescInferFnExpr),
+                             hasDescendant(SetGetSbpFnExpr),
+                             hasDescendant(SetSbpSignatureInferFnExpr),
+                             hasDescendant(SetInputArgModifyFnExpr),
+                             hasDescendant(SetOutputArgModifyFnExpr),
+                             hasDescendant(SetOutputBlobTimeShapeInferFnExpr),
+                             hasDescendant(SetNdSbpInferFnExpr),
+                             hasDescendant(SetCheckAttrFnExpr),
+                             hasDescendant(SetDataTypeInferFnExpr),
+                             hasDescendant(SetDeviceInferFnExpr)))
               .bind("decl")),
       &Callback);
 
