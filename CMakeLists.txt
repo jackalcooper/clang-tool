@@ -68,6 +68,33 @@ set(REFACTORED_OP_SRC ${REFACTORED_ONEFLOW_SRC}/oneflow/user/ops/relu_op.cpp CAC
 get_filename_component(REFACTORED_OP_SRC_BASE_NAME ${REFACTORED_OP_SRC} NAME)
 get_filename_component(TEST_OP_SRC_BASE_NAME ${TEST_OP_SRC} NAME)
 
+file(GLOB_RECURSE op_files RELATIVE ${ONEFLOW_SRC} LIST_DIRECTORIES false "${ONEFLOW_SRC}/oneflow/user/ops/*.cpp")
+foreach(op_file ${op_files})
+  list(APPEND commands
+    COMMAND "$<TARGET_FILE:simple-tool>" -p=${COMPILATION_DATABASE_DIR} ${op_file})
+endforeach()
+# message(STATUS ${commands})
+
+add_custom_target(move-all
+  DEPENDS simple-tool
+  ${commands}
+  WORKING_DIRECTORY ${ONEFLOW_SRC}
+  JOB_POOLS
+)
+
+add_custom_target(fix-all)
+
+foreach(op_file ${op_files})
+  get_filename_component(TargetSuffix ${op_file} NAME_WLE)
+  set(target_name Move__${TargetSuffix})
+  add_custom_target(${target_name}
+  DEPENDS simple-tool
+  COMMAND "$<TARGET_FILE:simple-tool>" -p=${COMPILATION_DATABASE_DIR} ${op_file}
+  WORKING_DIRECTORY ${ONEFLOW_SRC}
+  )
+add_dependencies(fix-all ${target_name})
+endforeach()
+
 add_custom_target(move-op
   DEPENDS simple-tool
   COMMAND "$<TARGET_FILE:simple-tool>" -p=${COMPILATION_DATABASE_DIR} ${TEST_OP_SRC}
