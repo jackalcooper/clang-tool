@@ -167,7 +167,7 @@ declSetFn(SetCheckAttrFn, Maybe<void>,
                     const user_op::UserOpConfWrapper &conf));
 declSetFn(SetDataTypeInferFn, Maybe<void>,
           InferDataType(user_op::InferContext *ctx));
-declSetFn(SetDeviceInferFn, Maybe < Symbol<Device>,
+declSetFn(SetDeviceInferFn, Maybe<Symbol<Device>>,
           InferDevice(user_op::DeviceInferContext *ctx));
 
 namespace {
