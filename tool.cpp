@@ -54,6 +54,25 @@ using namespace clang::tooling;
 using namespace llvm;
 using clang::ast_type_traits::TraversalKind::TK_IgnoreUnlessSpelledInSource;
 
+enum SetFnType {
+  SetTensorDescInferFn = 1,
+  SetLogicalTensorDescInferFn = 2,
+  SetPhysicalTensorDescInferFn = 3,
+  SetGetSbpFn = 4,
+  SetSbpSignatureInferFn = 5,
+  SetInputArgModifyFn = 6,
+  SetOutputArgModifyFn = 7,
+  SetOutputBlobTimeShapeInferFn = 8,
+  SetNdSbpInferFn = 9,
+  SetCheckAttrFn = 10,
+  SetDataTypeInferFn = 11,
+  SetDeviceInferFn = 12
+};
+
+template <SetFnType> std::string getStaticFuncReturnType();
+template <SetFnType> std::string getFuncName();
+template <SetFnType> CXXMemberCallExpr getExpr();
+template <SetFnType> std::string getStaticFuncDeclare();
 auto hasLambdaExpr =
     has(cxxBindTemporaryExpr(hasDescendant(lambdaExpr().bind("lambda"))));
 #define declSetFn(func_name, return_t, declare)                                \
@@ -62,8 +81,10 @@ auto hasLambdaExpr =
       cxxMemberCallExpr(has(memberExpr(member(hasName(#func_name)))),          \
                         hasLambdaExpr)                                         \
           .bind(getFuncName_##func_name());                                    \
-  std::string getReturnType_##func_name() { return #return_t; }                \
-  std::string getDeclare_##func_name() { return #declare; }
+  template <> std::string getStaticFuncReturnType<func_name>() {               \
+    return #return_t;                                                          \
+  }                                                                            \
+  template <> std::string getStaticFuncDeclare<func_name>() { return #declare; }
 
 declSetFn(SetTensorDescInferFn, " ", " ");
 declSetFn(SetLogicalTensorDescInferFn, Maybe<void>,
