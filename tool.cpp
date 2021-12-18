@@ -54,11 +54,13 @@ using namespace clang::tooling;
 using namespace llvm;
 using clang::ast_type_traits::TraversalKind::TK_IgnoreUnlessSpelledInSource;
 
-auto hasLambdaExpr = hasDescendant(lambdaExpr().bind("lambda"));
+auto hasLambdaExpr =
+    has(cxxBindTemporaryExpr(hasDescendant(lambdaExpr().bind("lambda"))));
 #define declSetFn(func_name)                                                   \
   std::string getFuncName_##func_name() { return #func_name; }                 \
   auto func_name##Expr =                                                       \
-      cxxMemberCallExpr(has(memberExpr(member(hasName(#func_name)))))          \
+      cxxMemberCallExpr(has(memberExpr(member(hasName(#func_name)))),          \
+                        hasLambdaExpr)                                         \
           .bind(getFuncName_##func_name());
 
 declSetFn(SetTensorDescInferFn);
