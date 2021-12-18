@@ -89,7 +89,7 @@ foreach(op_file ${op_files})
   set(target_name Move__${TargetSuffix})
   add_custom_target(${target_name}
   DEPENDS simple-tool
-  COMMAND "$<TARGET_FILE:simple-tool>" -p=${COMPILATION_DATABASE_DIR} ${op_file}
+  COMMAND "$<TARGET_FILE:simple-tool>" -p=${COMPILATION_DATABASE_DIR} ${op_file} > ${op_file}.gen
   WORKING_DIRECTORY ${ONEFLOW_SRC}
   )
 add_dependencies(fix-all ${target_name})

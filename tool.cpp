@@ -138,7 +138,7 @@ public:
       auto body_str =
           std::string(sm->getCharacterData(b),
                       sm->getCharacterData(e) - sm->getCharacterData(b) + 1);
-      llvm::errs() << body_str << "\n";
+      llvm::outs() << body_str << "\n";
     }
 
     // if (D->getBeginLoc().isValid()) {
