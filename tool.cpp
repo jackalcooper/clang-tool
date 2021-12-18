@@ -152,7 +152,7 @@ declSetFn(SetGetSbpFn, Maybe<void>, GetSbp(user_op::SbpContext *ctx));
 declSetFn(SetSbpSignatureInferFn, Maybe<void>,
           InferSbpSignature(user_op::InferSbpSignatureFnContext *ctx));
 declSetFn(SetInputArgModifyFn, Maybe<void>,
-          ModifyInputArg(GetInputArgModifier,
+          ModifyInputArg(GetInputArgModifier GetInputArgModifierFn,
                          const user_op::UserOpConfWrapper &conf));
 declSetFn(SetOutputArgModifyFn, "Maybe<void>",
           ModifyOutputArg(GetOutputArgModifier,
