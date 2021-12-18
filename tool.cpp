@@ -187,8 +187,7 @@ public:
       clang::SourceLocation b(body->getBeginLoc());
       clang::SourceLocation e(body->getEndLoc());
       auto body_str =
-          staticFuncReturnType.getValue() + " " +
-          staticFuncReturnType.getValue() +
+          staticFuncReturnType.getValue() + " " + staticFuncDeclare.getValue() +
           std::string(sm->getCharacterData(b),
                       sm->getCharacterData(e) - sm->getCharacterData(b) + 1);
       llvm::outs() << body_str << "\n";
