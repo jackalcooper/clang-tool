@@ -243,9 +243,9 @@ public:
     auto prefix = "/* static */ " + staticFuncReturnType.getValue() + " " +
                   OpCamelName + "::" + staticFuncDeclare.getValue() + " ";
     const std::string ADD_CODE_HERE = "{\nADD_CODE_HERE;\n}";
+    clang::SourceManager *sm = Result.SourceManager;
     if (lambda) {
       auto body = lambda->getBody();
-      clang::SourceManager *sm = Result.SourceManager;
       clang::SourceLocation b(body->getBeginLoc());
       clang::SourceLocation e(body->getEndLoc());
       auto body_str =
@@ -256,7 +256,15 @@ public:
       }
       llvm::outs() << prefix << body_str << "\n\n";
     } else {
-      llvm::outs() << prefix << ADD_CODE_HERE << "\n\n";
+      auto arg = Found->getArg(0);
+      clang::SourceLocation b(arg->getBeginLoc());
+      clang::SourceLocation e(arg->getEndLoc());
+      auto body_str =
+          std::string(sm->getCharacterData(b),
+                      sm->getCharacterData(e) - sm->getCharacterData(b) + 1);
+      llvm::outs() << prefix << "{\n"
+                   << body_str << "(ctx)"
+                   << "\n}\n\n";
     }
     if (SetTensorDescInferFnExpr) {
       llvm::outs() << "/*static*/ Maybe<void> " << OpCamelName
