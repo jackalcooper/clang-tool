@@ -154,15 +154,19 @@ public:
     checkAndDumpVarDecl(Result, "decl");
     llvm::Optional<std::string> staticFuncDeclare;
     llvm::Optional<std::string> staticFuncReturnType;
-    const clang::CXXMemberCallExpr *C;
+    const clang::CXXMemberCallExpr *Found = nullptr;
+    const clang::CXXMemberCallExpr *C = nullptr;
 #define tryConvert(func_name)                                                  \
   C = Result.Nodes.getNodeAs<CXXMemberCallExpr>(getFuncName<func_name>());     \
   if (C && C->getBeginLoc().isValid()) {                                       \
+    assert(!Found);                                                            \
     llvm::errs() << "[found] " << getFuncName<func_name>() << "\n";            \
     assert(C->getNumArgs() == 1);                                              \
     staticFuncDeclare = getStaticFuncDeclare<func_name>();                     \
     staticFuncReturnType = getStaticFuncReturnType<func_name>();               \
+    Found = C;                                                                 \
   }
+
     tryConvert(SetTensorDescInferFn);
     tryConvert(SetLogicalTensorDescInferFn);
     tryConvert(SetPhysicalTensorDescInferFn);
