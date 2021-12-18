@@ -261,7 +261,7 @@ public:
       clang::SourceLocation e(arg->getEndLoc());
       int offset = 1;
       if (arg->getBeginLoc() == arg->getEndLoc()) {
-        offset = 25;
+        offset = 50;
       }
       auto body_str = std::string(sm->getCharacterData(b),
                                   sm->getCharacterData(e) -
