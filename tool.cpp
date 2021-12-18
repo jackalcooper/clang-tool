@@ -281,6 +281,8 @@ static cl::extrahelp CommonHelp(CommonOptionsParser::HelpMessage);
 static cl::OptionCategory ToolTemplateCategory("tool-template options");
 
 int main(int argc, const char **argv) {
+  llvm::outs() << "#include \"oneflow/core/framework/op_generated.h\"\n\n";
+  llvm::outs() << "namespace oneflow {\n\n";
   llvm::sys::PrintStackTraceOnErrorSignal(argv[0]);
 
   auto Executor = clang::tooling::createExecutorFromCommandLineArgs(
