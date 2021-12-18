@@ -152,22 +152,29 @@ public:
 
   void run(const MatchFinder::MatchResult &Result) override {
     checkAndDumpVarDecl(Result, "decl");
-    checkAndDumpCXXMemberCallExpr(Result, getFuncName<SetTensorDescInferFn>());
-    checkAndDumpCXXMemberCallExpr(Result,
-                                  getFuncName<SetLogicalTensorDescInferFn>());
-    checkAndDumpCXXMemberCallExpr(Result,
-                                  getFuncName<SetPhysicalTensorDescInferFn>());
-    checkAndDumpCXXMemberCallExpr(Result, getFuncName<SetGetSbpFn>());
-    checkAndDumpCXXMemberCallExpr(Result,
-                                  getFuncName<SetSbpSignatureInferFn>());
-    checkAndDumpCXXMemberCallExpr(Result, getFuncName<SetInputArgModifyFn>());
-    checkAndDumpCXXMemberCallExpr(Result, getFuncName<SetOutputArgModifyFn>());
-    checkAndDumpCXXMemberCallExpr(Result,
-                                  getFuncName<SetOutputBlobTimeShapeInferFn>());
-    checkAndDumpCXXMemberCallExpr(Result, getFuncName<SetNdSbpInferFn>());
-    checkAndDumpCXXMemberCallExpr(Result, getFuncName<SetCheckAttrFn>());
-    checkAndDumpCXXMemberCallExpr(Result, getFuncName<SetDataTypeInferFn>());
-    checkAndDumpCXXMemberCallExpr(Result, getFuncName<SetDeviceInferFn>());
+    llvm::Optional<std::string> staticFuncDeclare;
+    llvm::Optional<std::string> staticFuncReturnType;
+    const clang::CXXMemberCallExpr *C;
+#define tryConvert(func_name)                                                  \
+  C = Result.Nodes.getNodeAs<CXXMemberCallExpr>(getFuncName<func_name>());     \
+  if (C && C->getBeginLoc().isValid()) {                                       \
+    llvm::errs() << "[found] " << getFuncName<func_name>() << "\n";            \
+    assert(C->getNumArgs() == 1);                                              \
+    staticFuncDeclare = getStaticFuncDeclare<func_name>();                     \
+    staticFuncReturnType = getStaticFuncReturnType<func_name>();               \
+  }
+    tryConvert(SetTensorDescInferFn);
+    tryConvert(SetLogicalTensorDescInferFn);
+    tryConvert(SetPhysicalTensorDescInferFn);
+    tryConvert(SetGetSbpFn);
+    tryConvert(SetSbpSignatureInferFn);
+    tryConvert(SetInputArgModifyFn);
+    tryConvert(SetOutputArgModifyFn);
+    tryConvert(SetOutputBlobTimeShapeInferFn);
+    tryConvert(SetNdSbpInferFn);
+    tryConvert(SetCheckAttrFn);
+    tryConvert(SetDataTypeInferFn);
+    tryConvert(SetDeviceInferFn);
     auto *lambda = Result.Nodes.getNodeAs<LambdaExpr>("lambda");
     // lambda->dump();
     if (lambda) {
