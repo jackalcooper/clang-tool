@@ -76,6 +76,38 @@ std::string convertToCamelFromSnakeCase(const std::string &input,
   }
   return output;
 }
+bool IsConvOp(const std::string &op_name) {
+  return op_name.rfind("conv", 0) == 0 &&
+         op_name.find("grad") == std::string::npos;
+}
+std::string GetConvOpClassName(const std::string &op_name) {
+  std::string ret(convertToCamelFromSnakeCase(op_name, true));
+  // NOTE: should change form conv => Convolution ?
+  return ret;
+}
+#include <regex>
+std::string PostProcessClassName(const std::string &op_name) {
+  std::string ret = op_name;
+  ret = std::regex_replace(ret, std::regex("pool"), "Pool");
+  ret = std::regex_replace(ret, std::regex("_1d"), "1D");
+  ret = std::regex_replace(ret, std::regex("_2d"), "2D");
+  ret = std::regex_replace(ret, std::regex("_3d"), "3D");
+  ret = std::regex_replace(ret, std::regex("1d"), "1D");
+  ret = std::regex_replace(ret, std::regex("2d"), "2D");
+  ret = std::regex_replace(ret, std::regex("3d"), "3D");
+  return ret;
+}
+
+std::string GetOpClassName(const std::string &op_name) {
+  std::string ret = "";
+  if (IsConvOp(op_name)) {
+    ret = GetConvOpClassName(op_name);
+  } else {
+    ret = convertToCamelFromSnakeCase(op_name, true);
+  }
+  return PostProcessClassName(ret);
+}
+
 enum SetFnType {
   SetTensorDescInferFn = 1,
   SetLogicalTensorDescInferFn = 2,
@@ -178,8 +210,7 @@ public:
         getFuncName<SetTensorDescInferFn>());
     auto op_type_name =
         Result.Nodes.getNodeAs<clang::StringLiteral>("op_type_name");
-    auto OpCamelName =
-        convertToCamelFromSnakeCase(op_type_name->getString(), true);
+    auto OpCamelName = GetOpClassName(op_type_name->getString()) + "Op";
     checkAndDumpVarDecl(Result, "decl");
     llvm::Optional<std::string> staticFuncDeclare;
     llvm::Optional<std::string> staticFuncReturnType;
