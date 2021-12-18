@@ -261,13 +261,15 @@ public:
       clang::SourceLocation e(arg->getEndLoc());
       int offset = 1;
       if (arg->getBeginLoc() == arg->getEndLoc()) {
-        offset = 10;
+        offset = 25;
       }
       auto body_str = std::string(sm->getCharacterData(b),
                                   sm->getCharacterData(e) -
                                       sm->getCharacterData(b) + offset);
+      llvm::StringRef body_ref(body_str);
+      body_ref = body_ref.take_until([](char x) { return x == ')'; });
       llvm::outs() << prefix << "{\n"
-                   << "return " << body_str << "(ctx);"
+                   << "return " << body_ref << "(ctx);"
                    << "\n}\n\n";
     }
     if (SetTensorDescInferFnExpr) {
