@@ -71,16 +71,18 @@ enum SetFnType {
 
 template <SetFnType> std::string getStaticFuncReturnType();
 template <SetFnType> std::string getFuncName();
-template <SetFnType> CXXMemberCallExpr getExpr();
+using clang::ast_matchers::internal::Matcher;
+template <SetFnType> Matcher<clang::Stmt> getExpr();
 template <SetFnType> std::string getStaticFuncDeclare();
 auto hasLambdaExpr =
     has(cxxBindTemporaryExpr(hasDescendant(lambdaExpr().bind("lambda"))));
 #define declSetFn(func_name, return_t, declare)                                \
   template <> std::string getFuncName<func_name>() { return #func_name; }      \
-  auto func_name##Expr =                                                       \
-      cxxMemberCallExpr(has(memberExpr(member(hasName(#func_name)))),          \
-                        hasLambdaExpr)                                         \
-          .bind(#func_name);                                                   \
+  template <> Matcher<clang::Stmt> getExpr<func_name>() {                      \
+    return cxxMemberCallExpr(has(memberExpr(member(hasName(#func_name)))),     \
+                             hasLambdaExpr)                                    \
+        .bind(#func_name);                                                     \
+  }                                                                            \
   template <> std::string getStaticFuncReturnType<func_name>() {               \
     return #return_t;                                                          \
   }                                                                            \
@@ -220,20 +222,21 @@ int main(int argc, const char **argv) {
   Finder.addMatcher(
       traverse(
           TK_IgnoreUnlessSpelledInSource,
-          varDecl(hasGlobalStorage(),
-                  hasType(cxxRecordDecl(matchesName("UserOpRegisterTrigger"))),
-                  eachOf(hasDescendant(SetTensorDescInferFnExpr),
-                         hasDescendant(SetLogicalTensorDescInferFnExpr),
-                         hasDescendant(SetPhysicalTensorDescInferFnExpr),
-                         hasDescendant(SetGetSbpFnExpr),
-                         hasDescendant(SetSbpSignatureInferFnExpr),
-                         hasDescendant(SetInputArgModifyFnExpr),
-                         hasDescendant(SetOutputArgModifyFnExpr),
-                         hasDescendant(SetOutputBlobTimeShapeInferFnExpr),
-                         hasDescendant(SetNdSbpInferFnExpr),
-                         hasDescendant(SetCheckAttrFnExpr),
-                         hasDescendant(SetDataTypeInferFnExpr),
-                         hasDescendant(SetDeviceInferFnExpr)))
+          varDecl(
+              hasGlobalStorage(),
+              hasType(cxxRecordDecl(matchesName("UserOpRegisterTrigger"))),
+              eachOf(hasDescendant(getExpr<SetTensorDescInferFn>()),
+                     hasDescendant(getExpr<SetLogicalTensorDescInferFn>()),
+                     hasDescendant(getExpr<SetPhysicalTensorDescInferFn>()),
+                     hasDescendant(getExpr<SetGetSbpFn>()),
+                     hasDescendant(getExpr<SetSbpSignatureInferFn>()),
+                     hasDescendant(getExpr<SetInputArgModifyFn>()),
+                     hasDescendant(getExpr<SetOutputArgModifyFn>()),
+                     hasDescendant(getExpr<SetOutputBlobTimeShapeInferFn>()),
+                     hasDescendant(getExpr<SetNdSbpInferFn>()),
+                     hasDescendant(getExpr<SetCheckAttrFn>()),
+                     hasDescendant(getExpr<SetDataTypeInferFn>()),
+                     hasDescendant(getExpr<SetDeviceInferFn>())))
               .bind("decl")),
       &Callback);
 
