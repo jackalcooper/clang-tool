@@ -88,7 +88,7 @@ auto hasLambdaExpr =
   }                                                                            \
   template <> std::string getStaticFuncDeclare<func_name>() { return #declare; }
 
-declSetFn(SetTensorDescInferFn, " ", " ");
+declSetFn(SetTensorDescInferFn, "UNDEFINED", "UNDEFINED");
 declSetFn(SetLogicalTensorDescInferFn, Maybe<void>,
           InferLogicalTensorDesc(user_op::InferContext *ctx));
 declSetFn(SetPhysicalTensorDescInferFn, Maybe<void>,
@@ -187,6 +187,8 @@ public:
       clang::SourceLocation b(body->getBeginLoc());
       clang::SourceLocation e(body->getEndLoc());
       auto body_str =
+          staticFuncReturnType.getValue() + " " +
+          staticFuncReturnType.getValue() +
           std::string(sm->getCharacterData(b),
                       sm->getCharacterData(e) - sm->getCharacterData(b) + 1);
       llvm::outs() << body_str << "\n";
