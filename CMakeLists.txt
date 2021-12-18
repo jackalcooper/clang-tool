@@ -66,6 +66,7 @@ set(REFACTORED_ONEFLOW_SRC /home/caishenghang/oneflow-conda)
 set(REFACTORED_COMPILATION_DATABASE_DIR ${REFACTORED_ONEFLOW_SRC}/build)
 set(REFACTORED_OP_SRC ${REFACTORED_ONEFLOW_SRC}/oneflow/user/ops/relu_op.cpp CACHE STRING "" FORCE)
 get_filename_component(REFACTORED_OP_SRC_BASE_NAME ${REFACTORED_OP_SRC} NAME)
+get_filename_component(TEST_OP_SRC_BASE_NAME ${TEST_OP_SRC} NAME)
 
 add_custom_target(move-op
   DEPENDS simple-tool
@@ -74,6 +75,6 @@ add_custom_target(move-op
 )
 
 add_custom_target(dump-op
-  DEPENDS clang-check
   COMMAND clang-check -p=${REFACTORED_COMPILATION_DATABASE_DIR} -ast-dump -ast-dump-filter=ReluOp --extra-arg="-fno-color-diagnostics" ${REFACTORED_OP_SRC}  > ${REFACTORED_OP_SRC_BASE_NAME}.ast
+  COMMAND clang-check -p=${COMPILATION_DATABASE_DIR} -ast-dump -ast-dump-filter=UserOpRegisterTrigger --extra-arg="-fno-color-diagnostics" ${TEST_OP_SRC}  > ${TEST_OP_SRC_BASE_NAME}.ast
 )
