@@ -53,7 +53,29 @@ using namespace clang::ast_matchers;
 using namespace clang::tooling;
 using namespace llvm;
 using clang::ast_type_traits::TraversalKind::TK_IgnoreUnlessSpelledInSource;
+std::string convertToCamelFromSnakeCase(const std::string &input,
+                                        bool capitalizeFirst) {
+  if (input.empty())
+    return "";
 
+  std::string output;
+  output.reserve(input.size());
+
+  // Push the first character, capatilizing if necessary.
+  if (capitalizeFirst && std::islower(input.front()))
+    output.push_back(toupper(input.front()));
+  else
+    output.push_back(input.front());
+
+  // Walk the input converting any `*_[a-z]` snake case into `*[A-Z]` camelCase.
+  for (size_t pos = 1, e = input.size(); pos < e; ++pos) {
+    if (input[pos] == '_' && pos != (e - 1) && std::islower(input[pos + 1]))
+      output.push_back(toupper(input[++pos]));
+    else
+      output.push_back(input[pos]);
+  }
+  return output;
+}
 enum SetFnType {
   SetTensorDescInferFn = 1,
   SetLogicalTensorDescInferFn = 2,
@@ -154,6 +176,10 @@ public:
   void run(const MatchFinder::MatchResult &Result) override {
     auto SetTensorDescInferFnExpr = Result.Nodes.getNodeAs<CXXMemberCallExpr>(
         getFuncName<SetTensorDescInferFn>());
+    auto op_type_name =
+        Result.Nodes.getNodeAs<clang::StringLiteral>("op_type_name");
+    auto OpCamelName =
+        convertToCamelFromSnakeCase(op_type_name->getString(), true);
     checkAndDumpVarDecl(Result, "decl");
     llvm::Optional<std::string> staticFuncDeclare;
     llvm::Optional<std::string> staticFuncReturnType;
@@ -190,14 +216,13 @@ public:
       clang::SourceLocation e(body->getEndLoc());
       auto body_str =
           "/* static */ " + staticFuncReturnType.getValue() + " " +
-          staticFuncDeclare.getValue() + " " +
+          OpCamelName + "::" + staticFuncDeclare.getValue() + " " +
           std::string(sm->getCharacterData(b),
                       sm->getCharacterData(e) - sm->getCharacterData(b) + 1);
       llvm::outs() << body_str << "\n";
     }
     if (SetTensorDescInferFnExpr) {
-      llvm::outs() << "/*static*/ Maybe<void> "
-                   << "OpNameCamelCase"
+      llvm::outs() << "/*static*/ Maybe<void> " << OpCamelName
                    << "::InferPhysicalTensorDesc(user_op::InferContext* "
                       "ctx) {return InferLogicalTensorDesc(ctx);}\n\n";
     }
@@ -239,6 +264,9 @@ int main(int argc, const char **argv) {
   ast_matchers::MatchFinder Finder;
   ToolTemplateCallback Callback(*Executor->get()->getExecutionContext());
 
+  auto CheckAndGetOpRegistryExpr = cxxMemberCallExpr(
+      has(memberExpr(member(hasName("CheckAndGetOpRegistry")))),
+      hasDescendant(stringLiteral().bind("op_type_name")));
   Finder.addMatcher(
       traverse(
           TK_IgnoreUnlessSpelledInSource,
@@ -256,7 +284,8 @@ int main(int argc, const char **argv) {
                      hasDescendant(getExpr<SetNdSbpInferFn>()),
                      hasDescendant(getExpr<SetCheckAttrFn>()),
                      hasDescendant(getExpr<SetDataTypeInferFn>()),
-                     hasDescendant(getExpr<SetDeviceInferFn>())))
+                     hasDescendant(getExpr<SetDeviceInferFn>())),
+              hasDescendant(CheckAndGetOpRegistryExpr))
               .bind("decl")),
       &Callback);
 
