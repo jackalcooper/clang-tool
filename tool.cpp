@@ -259,9 +259,13 @@ public:
       auto arg = Found->getArg(0);
       clang::SourceLocation b(arg->getBeginLoc());
       clang::SourceLocation e(arg->getEndLoc());
-      auto body_str =
-          std::string(sm->getCharacterData(b),
-                      sm->getCharacterData(e) - sm->getCharacterData(b) + 1);
+      int offset = 1;
+      if (arg->getBeginLoc() == arg->getEndLoc()) {
+        offset = 10;
+      }
+      auto body_str = std::string(sm->getCharacterData(b),
+                                  sm->getCharacterData(e) -
+                                      sm->getCharacterData(b) + offset);
       llvm::outs() << prefix << "{\n"
                    << "return " << body_str << "(ctx);"
                    << "\n}\n\n";
