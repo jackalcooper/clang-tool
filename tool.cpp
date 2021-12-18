@@ -128,8 +128,8 @@ template <SetFnType> std::string getFuncName();
 using clang::ast_matchers::internal::Matcher;
 template <SetFnType> Matcher<clang::Stmt> getExpr();
 template <SetFnType> std::string getStaticFuncDeclare();
-auto hasLambdaExpr =
-    has(cxxBindTemporaryExpr(hasDescendant(lambdaExpr().bind("lambda"))));
+auto hasLambdaExpr = optionally(
+    has(cxxBindTemporaryExpr(hasDescendant(lambdaExpr().bind("lambda")))));
 #define declSetFn(func_name, return_t, declare)                                \
   template <> std::string getFuncName<func_name>() { return #func_name; }      \
   template <> Matcher<clang::Stmt> getExpr<func_name>() {                      \
@@ -153,18 +153,18 @@ declSetFn(SetSbpSignatureInferFn, Maybe<void>,
           InferSbpSignature(user_op::InferSbpSignatureFnContext *ctx));
 declSetFn(SetInputArgModifyFn, Maybe<void>,
           ModifyInputArg(GetInputArgModifier,
-                         const user_op::UserOpConfWrapper &));
+                         const user_op::UserOpConfWrapper &conf));
 declSetFn(SetOutputArgModifyFn, "Maybe<void>",
           ModifyOutputArg(GetOutputArgModifier,
-                          const user_op::UserOpConfWrapper &));
+                          const user_op::UserOpConfWrapper &conf));
 declSetFn(
     SetOutputBlobTimeShapeInferFn, Maybe<void>,
     InferOutputBlobTimeShape(user_op::InferOutputBlobTimeShapeFnContext *ctx));
 declSetFn(SetNdSbpInferFn, Maybe<void>,
           InferNdSbp(user_op::InferNdSbpFnContext *ctx));
 declSetFn(SetCheckAttrFn, Maybe<void>,
-          CheckAttr(const user_op::UserOpDefWrapper &,
-                    const user_op::UserOpConfWrapper &));
+          CheckAttr(const user_op::UserOpDefWrapper &def,
+                    const user_op::UserOpConfWrapper &conf));
 declSetFn(SetDataTypeInferFn, Maybe<void>,
           InferDataType(user_op::InferContext *ctx));
 declSetFn(SetDeviceInferFn, Maybe < Symbol<Device>,
@@ -240,17 +240,19 @@ public:
     tryConvert(SetDeviceInferFn);
     auto *lambda = Result.Nodes.getNodeAs<LambdaExpr>("lambda");
     // lambda->dump();
+    auto prefix = "/* static */ " + staticFuncReturnType.getValue() + " " +
+                  OpCamelName + "::" + staticFuncDeclare.getValue() + " ";
     if (lambda) {
       auto body = lambda->getBody();
       clang::SourceManager *sm = Result.SourceManager;
       clang::SourceLocation b(body->getBeginLoc());
       clang::SourceLocation e(body->getEndLoc());
-      auto body_str =
-          "/* static */ " + staticFuncReturnType.getValue() + " " +
-          OpCamelName + "::" + staticFuncDeclare.getValue() + " " +
-          std::string(sm->getCharacterData(b),
-                      sm->getCharacterData(e) - sm->getCharacterData(b) + 1);
+      auto body_str = prefix + std::string(sm->getCharacterData(b),
+                                           sm->getCharacterData(e) -
+                                               sm->getCharacterData(b) + 1);
       llvm::outs() << body_str << "\n";
+    } else {
+      llvm::outs() << prefix << "{\nADD_CODE_HERE\n}\n";
     }
     if (SetTensorDescInferFnExpr) {
       llvm::outs() << "/*static*/ Maybe<void> " << OpCamelName
