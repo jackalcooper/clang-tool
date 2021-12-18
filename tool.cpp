@@ -76,11 +76,11 @@ template <SetFnType> std::string getStaticFuncDeclare();
 auto hasLambdaExpr =
     has(cxxBindTemporaryExpr(hasDescendant(lambdaExpr().bind("lambda"))));
 #define declSetFn(func_name, return_t, declare)                                \
-  std::string getFuncName_##func_name() { return #func_name; }                 \
+  template <> std::string getFuncName<func_name>() { return #func_name; }      \
   auto func_name##Expr =                                                       \
       cxxMemberCallExpr(has(memberExpr(member(hasName(#func_name)))),          \
                         hasLambdaExpr)                                         \
-          .bind(getFuncName_##func_name());                                    \
+          .bind(#func_name);                                                   \
   template <> std::string getStaticFuncReturnType<func_name>() {               \
     return #return_t;                                                          \
   }                                                                            \
@@ -150,21 +150,22 @@ public:
 
   void run(const MatchFinder::MatchResult &Result) override {
     checkAndDumpVarDecl(Result, "decl");
-    checkAndDumpCXXMemberCallExpr(Result, getFuncName_SetTensorDescInferFn());
+    checkAndDumpCXXMemberCallExpr(Result, getFuncName<SetTensorDescInferFn>());
     checkAndDumpCXXMemberCallExpr(Result,
-                                  getFuncName_SetLogicalTensorDescInferFn());
+                                  getFuncName<SetLogicalTensorDescInferFn>());
     checkAndDumpCXXMemberCallExpr(Result,
-                                  getFuncName_SetPhysicalTensorDescInferFn());
-    checkAndDumpCXXMemberCallExpr(Result, getFuncName_SetGetSbpFn());
-    checkAndDumpCXXMemberCallExpr(Result, getFuncName_SetSbpSignatureInferFn());
-    checkAndDumpCXXMemberCallExpr(Result, getFuncName_SetInputArgModifyFn());
-    checkAndDumpCXXMemberCallExpr(Result, getFuncName_SetOutputArgModifyFn());
+                                  getFuncName<SetPhysicalTensorDescInferFn>());
+    checkAndDumpCXXMemberCallExpr(Result, getFuncName<SetGetSbpFn>());
     checkAndDumpCXXMemberCallExpr(Result,
-                                  getFuncName_SetOutputBlobTimeShapeInferFn());
-    checkAndDumpCXXMemberCallExpr(Result, getFuncName_SetNdSbpInferFn());
-    checkAndDumpCXXMemberCallExpr(Result, getFuncName_SetCheckAttrFn());
-    checkAndDumpCXXMemberCallExpr(Result, getFuncName_SetDataTypeInferFn());
-    checkAndDumpCXXMemberCallExpr(Result, getFuncName_SetDeviceInferFn());
+                                  getFuncName<SetSbpSignatureInferFn>());
+    checkAndDumpCXXMemberCallExpr(Result, getFuncName<SetInputArgModifyFn>());
+    checkAndDumpCXXMemberCallExpr(Result, getFuncName<SetOutputArgModifyFn>());
+    checkAndDumpCXXMemberCallExpr(Result,
+                                  getFuncName<SetOutputBlobTimeShapeInferFn>());
+    checkAndDumpCXXMemberCallExpr(Result, getFuncName<SetNdSbpInferFn>());
+    checkAndDumpCXXMemberCallExpr(Result, getFuncName<SetCheckAttrFn>());
+    checkAndDumpCXXMemberCallExpr(Result, getFuncName<SetDataTypeInferFn>());
+    checkAndDumpCXXMemberCallExpr(Result, getFuncName<SetDeviceInferFn>());
     auto *lambda = Result.Nodes.getNodeAs<LambdaExpr>("lambda");
     // lambda->dump();
     if (lambda) {
