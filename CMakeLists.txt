@@ -75,5 +75,5 @@ add_custom_target(move-op
 
 add_custom_target(dump-op
   DEPENDS clang-check
-  COMMAND clang-check -p=${REFACTORED_COMPILATION_DATABASE_DIR} -ast-dump --extra-arg="-fno-color-diagnostics" ${REFACTORED_OP_SRC}  > ${REFACTORED_OP_SRC_BASE_NAME}.ast
+  COMMAND clang-check -p=${REFACTORED_COMPILATION_DATABASE_DIR} -ast-dump -ast-dump-filter=ReluOp --extra-arg="-fno-color-diagnostics" ${REFACTORED_OP_SRC}  > ${REFACTORED_OP_SRC_BASE_NAME}.ast
 )

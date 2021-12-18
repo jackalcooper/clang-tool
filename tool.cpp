@@ -54,6 +54,7 @@ using namespace clang::tooling;
 using namespace llvm;
 using clang::ast_type_traits::TraversalKind::TK_IgnoreUnlessSpelledInSource;
 
+auto hasLambdaExpr = hasDescendant(lambdaExpr().bind("lambda"));
 #define declSetFn(func_name)                                                   \
   std::string getFuncName_##func_name() { return #func_name; }                 \
   auto func_name##Expr =                                                       \
@@ -100,6 +101,9 @@ public:
     auto *C = Result.Nodes.getNodeAs<CXXMemberCallExpr>(name);
     if (C && C->getBeginLoc().isValid()) {
       llvm::errs() << "[dump] " << name << "\n";
+      assert(C->getNumArgs() == 1);
+      auto arg0 = C->getArg(0);
+      // C->dump();
     } else {
       // llvm::errs() << "[absent] " << name << "\n";
     }
@@ -122,6 +126,19 @@ public:
     checkAndDumpCXXMemberCallExpr(Result, getFuncName_SetCheckAttrFn());
     checkAndDumpCXXMemberCallExpr(Result, getFuncName_SetDataTypeInferFn());
     checkAndDumpCXXMemberCallExpr(Result, getFuncName_SetDeviceInferFn());
+    auto *lambda = Result.Nodes.getNodeAs<LambdaExpr>("lambda");
+    // lambda->dump();
+    if (lambda) {
+      auto body = lambda->getBody();
+      clang::SourceManager *sm = Result.SourceManager;
+      clang::SourceLocation b(body->getBeginLoc());
+      clang::SourceLocation e(body->getEndLoc());
+      auto body_str =
+          std::string(sm->getCharacterData(b),
+                      sm->getCharacterData(e) - sm->getCharacterData(b) + 1);
+      llvm::errs() << body_str << "\n";
+    }
+
     // if (D->getBeginLoc().isValid()) {
     //   D->getBeginLoc().dump(*Result.SourceManager);
     //   D->dump();
