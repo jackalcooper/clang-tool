@@ -155,7 +155,7 @@ declSetFn(SetInputArgModifyFn, Maybe<void>,
           ModifyInputArg(GetInputArgModifier GetInputArgModifierFn,
                          const user_op::UserOpConfWrapper &conf));
 declSetFn(SetOutputArgModifyFn, "Maybe<void>",
-          ModifyOutputArg(GetOutputArgModifier,
+          ModifyOutputArg(GetOutputArgModifier GetOutputArgModifierFn,
                           const user_op::UserOpConfWrapper &conf));
 declSetFn(
     SetOutputBlobTimeShapeInferFn, Maybe<void>,
