@@ -73,40 +73,55 @@ declSetFn(SetCheckAttrFn);
 declSetFn(SetDataTypeInferFn);
 declSetFn(SetDeviceInferFn);
 
-template <typename T>
-void checkAndDump(const MatchFinder::MatchResult &Result, std::string name) {
-  auto *C = Result.Nodes.getNodeAs<T>(name);
-  if (C && C->getBeginLoc().isValid()) {
-    llvm::errs() << "[dump] " << name << "\n";
-    // C->dump();
-  } else {
-    // llvm::errs() << "[absent] " << name << "\n";
-  }
-}
-
 namespace {
 class ToolTemplateCallback : public MatchFinder::MatchCallback {
 public:
   ToolTemplateCallback(ExecutionContext &Context) : Context(Context) {}
+  void checkAndDumpVarDecl(const MatchFinder::MatchResult &Result,
+                           std::string name) {
+    auto *C = Result.Nodes.getNodeAs<VarDecl>(name);
+    if (C && C->getBeginLoc().isValid()) {
+      llvm::errs() << "[dump] " << name << "\n";
+      AtomicChange Change(*Result.SourceManager, C->getBeginLoc());
+      auto Err = Change.replace(
+          *Result.SourceManager,
+          CharSourceRange::getCharRange(C->getSourceRange()), "");
+      if (Err) {
+        llvm::errs() << "Change error: " << llvm::toString(std::move(Err))
+                     << "\n";
+      }
+      Context.reportResult(Change.getKey(), C->getQualifiedNameAsString());
+    } else {
+      // llvm::errs() << "[absent] " << name << "\n";
+    }
+  }
+  void checkAndDumpCXXMemberCallExpr(const MatchFinder::MatchResult &Result,
+                                     std::string name) {
+    auto *C = Result.Nodes.getNodeAs<CXXMemberCallExpr>(name);
+    if (C && C->getBeginLoc().isValid()) {
+      llvm::errs() << "[dump] " << name << "\n";
+    } else {
+      // llvm::errs() << "[absent] " << name << "\n";
+    }
+  }
 
   void run(const MatchFinder::MatchResult &Result) override {
-    checkAndDump<VarDecl>(Result, "decl");
-    checkAndDump<CXXMemberCallExpr>(Result, getFuncName_SetTensorDescInferFn());
-    checkAndDump<CXXMemberCallExpr>(Result,
-                                    getFuncName_SetLogicalTensorDescInferFn());
-    checkAndDump<CXXMemberCallExpr>(Result,
-                                    getFuncName_SetPhysicalTensorDescInferFn());
-    checkAndDump<CXXMemberCallExpr>(Result, getFuncName_SetGetSbpFn());
-    checkAndDump<CXXMemberCallExpr>(Result,
-                                    getFuncName_SetSbpSignatureInferFn());
-    checkAndDump<CXXMemberCallExpr>(Result, getFuncName_SetInputArgModifyFn());
-    checkAndDump<CXXMemberCallExpr>(Result, getFuncName_SetOutputArgModifyFn());
-    checkAndDump<CXXMemberCallExpr>(
-        Result, getFuncName_SetOutputBlobTimeShapeInferFn());
-    checkAndDump<CXXMemberCallExpr>(Result, getFuncName_SetNdSbpInferFn());
-    checkAndDump<CXXMemberCallExpr>(Result, getFuncName_SetCheckAttrFn());
-    checkAndDump<CXXMemberCallExpr>(Result, getFuncName_SetDataTypeInferFn());
-    checkAndDump<CXXMemberCallExpr>(Result, getFuncName_SetDeviceInferFn());
+    checkAndDumpVarDecl(Result, "decl");
+    checkAndDumpCXXMemberCallExpr(Result, getFuncName_SetTensorDescInferFn());
+    checkAndDumpCXXMemberCallExpr(Result,
+                                  getFuncName_SetLogicalTensorDescInferFn());
+    checkAndDumpCXXMemberCallExpr(Result,
+                                  getFuncName_SetPhysicalTensorDescInferFn());
+    checkAndDumpCXXMemberCallExpr(Result, getFuncName_SetGetSbpFn());
+    checkAndDumpCXXMemberCallExpr(Result, getFuncName_SetSbpSignatureInferFn());
+    checkAndDumpCXXMemberCallExpr(Result, getFuncName_SetInputArgModifyFn());
+    checkAndDumpCXXMemberCallExpr(Result, getFuncName_SetOutputArgModifyFn());
+    checkAndDumpCXXMemberCallExpr(Result,
+                                  getFuncName_SetOutputBlobTimeShapeInferFn());
+    checkAndDumpCXXMemberCallExpr(Result, getFuncName_SetNdSbpInferFn());
+    checkAndDumpCXXMemberCallExpr(Result, getFuncName_SetCheckAttrFn());
+    checkAndDumpCXXMemberCallExpr(Result, getFuncName_SetDataTypeInferFn());
+    checkAndDumpCXXMemberCallExpr(Result, getFuncName_SetDeviceInferFn());
     // if (D->getBeginLoc().isValid()) {
     //   D->getBeginLoc().dump(*Result.SourceManager);
     //   D->dump();
@@ -172,6 +187,6 @@ int main(int argc, const char **argv) {
   }
   Executor->get()->getToolResults()->forEachResult(
       [](llvm::StringRef key, llvm::StringRef value) {
-        // llvm::errs() << "----" << key.str() << "\n" << value.str() << "\n";
+        llvm::errs() << "----" << key.str() << "\n" << value.str() << "\n";
       });
 }

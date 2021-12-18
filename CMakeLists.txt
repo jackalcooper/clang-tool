@@ -62,9 +62,18 @@ clangTooling)
 set(ONEFLOW_SRC /home/caishenghang/oneflow-table-gen)
 set(COMPILATION_DATABASE_DIR ${ONEFLOW_SRC}/build CACHE STRING "" FORCE)
 set(TEST_OP_SRC ${ONEFLOW_SRC}/oneflow/user/ops/arg_sort_op.cpp CACHE STRING "" FORCE)
+set(REFACTORED_ONEFLOW_SRC /home/caishenghang/oneflow-conda)
+set(REFACTORED_COMPILATION_DATABASE_DIR ${REFACTORED_ONEFLOW_SRC}/build)
+set(REFACTORED_OP_SRC ${REFACTORED_ONEFLOW_SRC}/oneflow/user/ops/relu_op.cpp CACHE STRING "" FORCE)
+get_filename_component(REFACTORED_OP_SRC_BASE_NAME ${REFACTORED_OP_SRC} NAME)
 
 add_custom_target(move-op
   DEPENDS simple-tool
   COMMAND "$<TARGET_FILE:simple-tool>" -p=${COMPILATION_DATABASE_DIR} ${TEST_OP_SRC}
   USES_TERMINAL
+)
+
+add_custom_target(dump-op
+  DEPENDS clang-check
+  COMMAND clang-check -p=${REFACTORED_COMPILATION_DATABASE_DIR} -ast-dump --extra-arg="-fno-color-diagnostics" ${REFACTORED_OP_SRC}  > ${REFACTORED_OP_SRC_BASE_NAME}.ast
 )
