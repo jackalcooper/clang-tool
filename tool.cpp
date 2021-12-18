@@ -250,9 +250,9 @@ public:
       auto body_str = prefix + std::string(sm->getCharacterData(b),
                                            sm->getCharacterData(e) -
                                                sm->getCharacterData(b) + 1);
-      llvm::outs() << body_str << "\n";
+      llvm::outs() << body_str << "\n\n";
     } else {
-      llvm::outs() << prefix << "{\nADD_CODE_HERE\n}\n";
+      llvm::outs() << prefix << "{\nADD_CODE_HERE;\n}\n\n";
     }
     if (SetTensorDescInferFnExpr) {
       llvm::outs() << "/*static*/ Maybe<void> " << OpCamelName
