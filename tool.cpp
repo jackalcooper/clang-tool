@@ -263,7 +263,7 @@ public:
           std::string(sm->getCharacterData(b),
                       sm->getCharacterData(e) - sm->getCharacterData(b) + 1);
       llvm::outs() << prefix << "{\n"
-                   << body_str << "(ctx)"
+                   << "return " << body_str << "(ctx)"
                    << "\n}\n\n";
     }
     if (SetTensorDescInferFnExpr) {
