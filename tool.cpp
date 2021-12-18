@@ -89,8 +89,7 @@ auto hasLambdaExpr =
   template <> std::string getStaticFuncDeclare<func_name>() { return #declare; }
 
 declSetFn(SetTensorDescInferFn, Maybe<void>,
-          ONE_OF__InferLogicalTensorDesc__InferPhysicalTensorDesc(
-              user_op::InferContext *ctx));
+          InferLogicalTensorDesc(user_op::InferContext *ctx));
 declSetFn(SetLogicalTensorDescInferFn, Maybe<void>,
           InferLogicalTensorDesc(user_op::InferContext *ctx));
 declSetFn(SetPhysicalTensorDescInferFn, Maybe<void>,
@@ -153,6 +152,8 @@ public:
   }
 
   void run(const MatchFinder::MatchResult &Result) override {
+    auto SetTensorDescInferFnExpr = Result.Nodes.getNodeAs<CXXMemberCallExpr>(
+        getFuncName<SetTensorDescInferFn>());
     checkAndDumpVarDecl(Result, "decl");
     llvm::Optional<std::string> staticFuncDeclare;
     llvm::Optional<std::string> staticFuncReturnType;
@@ -168,7 +169,6 @@ public:
     staticFuncReturnType = getStaticFuncReturnType<func_name>();               \
     Found = C;                                                                 \
   }
-
     tryConvert(SetTensorDescInferFn);
     tryConvert(SetLogicalTensorDescInferFn);
     tryConvert(SetPhysicalTensorDescInferFn);
@@ -195,7 +195,12 @@ public:
                       sm->getCharacterData(e) - sm->getCharacterData(b) + 1);
       llvm::outs() << body_str << "\n";
     }
-
+    if (SetTensorDescInferFnExpr) {
+      llvm::outs() << "/*static*/ Maybe<void> "
+                   << "OpNameCamelCase"
+                   << "::InferPhysicalTensorDesc(user_op::InferContext* "
+                      "ctx) {return InferLogicalTensorDesc(ctx);}\n\n";
+    }
     // if (D->getBeginLoc().isValid()) {
     //   D->getBeginLoc().dump(*Result.SourceManager);
     //   D->dump();
