@@ -56,25 +56,41 @@ using clang::ast_type_traits::TraversalKind::TK_IgnoreUnlessSpelledInSource;
 
 auto hasLambdaExpr =
     has(cxxBindTemporaryExpr(hasDescendant(lambdaExpr().bind("lambda"))));
-#define declSetFn(func_name)                                                   \
+#define declSetFn(func_name, return_t, declare)                                \
   std::string getFuncName_##func_name() { return #func_name; }                 \
   auto func_name##Expr =                                                       \
       cxxMemberCallExpr(has(memberExpr(member(hasName(#func_name)))),          \
                         hasLambdaExpr)                                         \
-          .bind(getFuncName_##func_name());
+          .bind(getFuncName_##func_name());                                    \
+  std::string getReturnType_##func_name() { return #return_t; }                \
+  std::string getDeclare_##func_name() { return #declare; }
 
-declSetFn(SetTensorDescInferFn);
-declSetFn(SetLogicalTensorDescInferFn);
-declSetFn(SetPhysicalTensorDescInferFn);
-declSetFn(SetGetSbpFn);
-declSetFn(SetSbpSignatureInferFn);
-declSetFn(SetInputArgModifyFn);
-declSetFn(SetOutputArgModifyFn);
-declSetFn(SetOutputBlobTimeShapeInferFn);
-declSetFn(SetNdSbpInferFn);
-declSetFn(SetCheckAttrFn);
-declSetFn(SetDataTypeInferFn);
-declSetFn(SetDeviceInferFn);
+declSetFn(SetTensorDescInferFn, " ", " ");
+declSetFn(SetLogicalTensorDescInferFn, Maybe<void>,
+          InferLogicalTensorDesc(user_op::InferContext *ctx));
+declSetFn(SetPhysicalTensorDescInferFn, Maybe<void>,
+          InferPhysicalTensorDesc(user_op::InferContext *ctx));
+declSetFn(SetGetSbpFn, Maybe<void>, GetSbp(user_op::SbpContext *ctx));
+declSetFn(SetSbpSignatureInferFn, Maybe<void>,
+          InferSbpSignature(user_op::InferSbpSignatureFnContext *ctx));
+declSetFn(SetInputArgModifyFn, Maybe<void>,
+          ModifyInputArg(GetInputArgModifier,
+                         const user_op::UserOpConfWrapper &));
+declSetFn(SetOutputArgModifyFn, "Maybe<void>",
+          ModifyOutputArg(GetOutputArgModifier,
+                          const user_op::UserOpConfWrapper &));
+declSetFn(
+    SetOutputBlobTimeShapeInferFn, Maybe<void>,
+    InferOutputBlobTimeShape(user_op::InferOutputBlobTimeShapeFnContext *ctx));
+declSetFn(SetNdSbpInferFn, Maybe<void>,
+          InferNdSbp(user_op::InferNdSbpFnContext *ctx));
+declSetFn(SetCheckAttrFn, Maybe<void>,
+          CheckAttr(const user_op::UserOpDefWrapper &,
+                    const user_op::UserOpConfWrapper &));
+declSetFn(SetDataTypeInferFn, Maybe<void>,
+          InferDataType(user_op::InferContext *ctx));
+declSetFn(SetDeviceInferFn, Maybe < Symbol<Device>,
+          InferDevice(user_op::DeviceInferContext *ctx));
 
 namespace {
 class ToolTemplateCallback : public MatchFinder::MatchCallback {
