@@ -88,7 +88,9 @@ auto hasLambdaExpr =
   }                                                                            \
   template <> std::string getStaticFuncDeclare<func_name>() { return #declare; }
 
-declSetFn(SetTensorDescInferFn, "UNDEFINED", "UNDEFINED");
+declSetFn(SetTensorDescInferFn, Maybe<void>,
+          ONE_OF__InferLogicalTensorDesc__InferPhysicalTensorDesc(
+              user_op::InferContext *ctx));
 declSetFn(SetLogicalTensorDescInferFn, Maybe<void>,
           InferLogicalTensorDesc(user_op::InferContext *ctx));
 declSetFn(SetPhysicalTensorDescInferFn, Maybe<void>,
